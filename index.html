@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <title>GitHub Discussions 聊天室</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:#f6f8fa}
+    #app{max-width:600px;margin:40px auto;background:#fff;border:1px solid #d0d7de;border-radius:8px;display:flex;flex-direction:column;height:80vh}
+    #messages{flex:1;padding:12px;overflow-y:auto}
+    .msg{margin:6px 0;font-size:14px;line-height:1.5}
+    .msg b{color:#0969da}
+    #bar{display:flex;border-top:1px solid #d0d7de}
+    #bar input{flex:1;border:none;padding:10px;font-size:14px;outline:none}
+    #bar button{padding:0 16px;border:none;background:#0969da;color:#fff;cursor:pointer;font-size:14px}
+    #bar button:disabled{background:#8c959f}
+    small{display:block;text-align:center;padding:6px;color:#656d76}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <small>每条消息 = 一条 Discussion 回复 · 2 秒自动刷新</small>
+    <div id="messages"></div>
+    <div id="bar">
+      <input id="in" placeholder="说点什么…" maxlength="500"/>
+      <button id="btn" onclick="send()">发送</button>
+    </div>
+  </div>
+
+<script>
+  /* ====== 只需改这里 3 个变量 ====== */
+  const TOKEN   = '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';   // 刚才复制的 token
+  const OWNER   = '勿念';
+  const REPO    = 'dongtai-TXT';
+  const DISCUSSION_NUMBER = 1;                // Discussion 编号
+  /* ================================== */
+
+  const MSG_URL = `https://api.github.com/repos/${OWNER}/${REPO}/discussions/${DISCUSSION_NUMBER}/comments`;
+  const HEADERS = { 'Accept': 'application/vnd.github+json',
+                    'Authorization': `token ${TOKEN}` };
+
+  let lastLen = 0;
+
+  async function load(){
+    const res = await fetch(MSG_URL);
+    const arr = await res.json();
+    if(arr.length > lastLen){
+      const box = document.getElementById('messages');
+      arr.slice(lastLen).forEach(m=>{
+        const div = document.createElement('div');
+        div.className = 'msg';
+        div.innerHTML = `<b>${m.author.login}</b>：${m.body}`;
+        box.appendChild(div);
+      });
+      lastLen = arr.length;
+      box.scrollTop = box.scrollHeight;
+    }
+  }
+
+  async function send(){
+    const txt = document.getElementById('in').value.trim();
+    if(!txt) return;
+    document.getElementById('btn').disabled = true;
+    const body = { body: txt };
+    await fetch(MSG_URL, { method:'POST',
+                           headers: HEADERS,
+                           body: JSON.stringify(body) });
+    document.getElementById('in').value='';
+    document.getElementById('btn').disabled = false;
+    await load();
+  }
+
+  load();
+  setInterval(load,2000);
+</script>
+</body>
+</html>
